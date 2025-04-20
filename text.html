@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Auto Save Photos</title>
+</head>
+<body>
+  <h2>Auto-Saving Photos Every 5 Seconds</h2>
+  <video id="video" autoplay style="display:none;"></video>
+  <canvas id="canvas" style="display:none;"></canvas>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const context = canvas.getContext('2d');
+    let count = 0;
+    const maxPhotos = 12; // 12 photos = 1 minute (every 5 sec)
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        video.srcObject = stream;
+
+        const interval = setInterval(() => {
+          if (count >= maxPhotos) {
+            clearInterval(interval);
+            stream.getTracks().forEach(track => track.stop());
+            return;
+          }
+
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          
+          // Convert to image
+          const imageData = canvas.toDataURL('image/png');
+
+          // Create link and trigger download
+          const a = document.createElement('a');
+          a.href = imageData;
+          a.download = `photo_${count + 1}.png`;
+          a.click();
+
+          count++;
+        }, 5000); // every 5 seconds
+      })
+      .catch(err => {
+        alert('Camera access is required: ' + err);
+      });
+  </script>
+</body>
+</html>
